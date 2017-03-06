@@ -8,7 +8,7 @@ import (
 )
 
 type LinkShortnerAPI struct {
-	myconnection *MongoConnection
+	myconnection *RedisCache
 }
 
 type UrlMapping struct {
