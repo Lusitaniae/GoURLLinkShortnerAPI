@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shortner Maximus</title>
+
+    <style media="screen">
+      body {
+        width:60%;
+        max-width:680px;
+        margin:auto;
+        text-align:center;
+        padding:6% 12%;
+        font-size: 14px;
+        background:
+          radial-gradient(circle farthest-side at 0% 50%,#fb1 23.5%,rgba(240,166,17,0) 0)21px 30px,
+          radial-gradient(circle farthest-side at 0% 50%,#B71 24%,rgba(240,166,17,0) 0)19px 30px,
+          linear-gradient(#fb1 14%,rgba(240,166,17,0) 0, rgba(240,166,17,0) 85%,#fb1 0)0 0,
+          linear-gradient(150deg,#fb1 24%,#B71 0,#B71 26%,rgba(240,166,17,0) 0,rgba(240,166,17,0) 74%,#B71 0,#B71 76%,#fb1 0)0 0,
+          linear-gradient(30deg,#fb1 24%,#B71 0,#B71 26%,rgba(240,166,17,0) 0,rgba(240,166,17,0) 74%,#B71 0,#B71 76%,#fb1 0)0 0,
+          linear-gradient(90deg,#B71 2%,#fb1 0,#fb1 98%,#B71 0%)0 0 #fb1;
+        background-size:40px 60px;
+        font-family: 'Ubuntu', Arial;
+      }
+      input {
+        border: 0;
+        padding: 8px;
+        box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.37);
+        border-radius: 3px;
+        font-family: 'Ubuntu', sans-serif;
+        font-size: 14px;
+      }
+      #long-url {
+        width:42%;
+      }
+      #short-url {
+        width:22%;
+      }
+      #submit{
+        color:white;
+
+        background: #3498db;
+        background-image: linear-gradient(to bottom, #3498db, #2980b9);
+      }
+      #submit:hover {
+        background: #3cb0fd;
+        background-image: -webkit-linear-gradient(top, #3cb0fd, #3498db);
+      }
+      .alert {
+        display:none;
+        padding:6px 10px;
+        margin:6px auto;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        width: 76%;
+      }
+      .alert-success{
+        color: #3c763d;
+        background-color: #dff0d8;
+        border-color: #d6e9c6;
+      }
+      .alert-error{
+        color: #a94442;
+        background-color: #f2dede;
+        border-color: #ebccd1;
+      }
+      @font-face {
+        font-family: 'Ubuntu';
+        font-style: normal;
+        font-weight: 400;
+        src: local('Ubuntu'),
+          url(http://fonts.gstatic.com/s/ubuntu/v9/zvCUQcxqeoKhyOlbifSAaevvDin1pK8aKteLpeZ5c0A.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+      }
+    </style>
+
+  </head>
+  <body>
+
+    <h2>Url Shortner</h2>
+
+    <form id="shortnerForm">
+
+      <div class="alert alert-success">
+      </div>
+
+      <div class="alert alert-error alert-duplicate">
+        Duplicate! Please choose new slug.
+      </div>
+
+      <div class="alert alert-error alert-connection">
+        Connection Issues. Please try again later.
+      </div>
+
+      <div class="alert alert-error alert-generic">
+        There was a problem. Please try again later.
+      </div>
+
+      <input type="text" name="short-url" min=3 id="short-url" placeholder="short-url-slug" required autofocus>
+
+      <input type="url" name="long-url" min=24 id="long-url"  placeholder="http://localhost/" required>
+
+      <input id="submit" type="submit" name="Submit">
+
+    </form>
+
+    <p>
+      Url shortener for demonstration purposes.
+    </p>
+
+    <footer>
+      <a href="#" title='DCMA and other inqueries'>Contact</a>
+    </footer>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+    <script type="text/javascript">
+
+    $(document).ready(function() {
+
+    $("#shortnerForm").submit( function(e)
+    {
+        e.preventDefault();
+        submitForm();
+    });
+
+    function submitForm() {
+
+      var long = $('input[name=long-url]').val();
+      var short = $('input[name=short-url]').val();
+      var base_url = location.protocol + '//' + location.host;
+
+      $.ajax({
+          type: 'POST',
+          dataType: 'text',
+          url:  base_url + '/Create',
+          data: JSON.stringify({ "shorturl": short, "longurl" : long }),
+
+          success: function(result) {
+
+            $('.alert').hide();
+
+            $(".alert-success")
+              .html('<b>Success!</b> Short url is: <a href="'+ base_url + '/' + short + '">'+ base_url + '/' +  short +'</a>');
+
+            $('.alert-success').fadeIn();
+
+          },
+
+         error: function(exception) {
+
+           var error = $.parseJSON(exception.responseText).StatusMessage;
+
+           $('.alert').hide();
+
+           if (error == 'duplicate')
+
+              $('.alert-duplicate').fadeIn();
+
+          else if (error == 'connection isues')
+
+              $('.alert-connection').fadeIn();
+
+          else
+
+              $('.alert-generic').fadeIn();
+
+
+         }
+
+       });
+
+    }
+
+    });
+    </script>
+
+  </body>
+</html>

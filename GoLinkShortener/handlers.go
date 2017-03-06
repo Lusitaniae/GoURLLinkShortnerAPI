@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"html/template"
 	"net/http"
 )
 
@@ -28,9 +29,8 @@ func NewUrlLinkShortenerAPI() *LinkShortnerAPI {
 }
 
 func (Ls *LinkShortnerAPI) UrlRoot(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello and welcome to the Go link shortner API \n"+
-		"Do a Get request with the short Link to get the long Link \n"+
-		"Do a POST request with long Link to get a short Link \n")
+	t, _ := template.ParseFiles("index.html")
+	t.Execute(w, nil)
 }
 
 func (Ls *LinkShortnerAPI) UrlCreate(w http.ResponseWriter, r *http.Request) {
