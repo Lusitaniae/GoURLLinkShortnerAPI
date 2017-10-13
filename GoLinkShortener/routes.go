@@ -31,6 +31,12 @@ func CreateRoutes(LS *LinkShortnerAPI) Routes {
 			LS.UrlRoot,
 		},
 		Route{
+			"StaticFiles",
+			"GET",
+			"/static/{file}",
+			LS.UrlRoot,
+		},
+		Route{
 			"UrlShow",
 			"GET",
 			"/{shorturl}",

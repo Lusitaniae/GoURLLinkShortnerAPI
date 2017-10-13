@@ -8,8 +8,11 @@ import (
 	"net/http"
 )
 
+/*
+
+ */
 type LinkShortnerAPI struct {
-	myconnection *RedisCache
+	db *Database
 }
 
 type UrlMapping struct {
@@ -22,20 +25,20 @@ type APIResponse struct {
 }
 
 func NewUrlLinkShortenerAPI() *LinkShortnerAPI {
-	LS := &LinkShortnerAPI{
-		myconnection: NewDBConnection(),
+	return &LinkShortnerAPI{
+		db: NewDatabase(),
 	}
-	return LS
 }
 
-func (Ls *LinkShortnerAPI) UrlRoot(w http.ResponseWriter, r *http.Request) {
+func (api *LinkShortnerAPI) UrlRoot(w http.ResponseWriter, r *http.Request) {
 	t, _ := template.ParseFiles("index.html")
 	t.Execute(w, nil)
 }
 
-func (Ls *LinkShortnerAPI) UrlCreate(w http.ResponseWriter, r *http.Request) {
+func (api *LinkShortnerAPI) UrlCreate(w http.ResponseWriter, r *http.Request) {
 	reqBodyStruct := new(UrlMapping)
 	responseEncoder := json.NewEncoder(w)
+	// decode json
 	if err := json.NewDecoder(r.Body).Decode(&reqBodyStruct); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := responseEncoder.Encode(&APIResponse{StatusMessage: err.Error()}); err != nil {
@@ -43,7 +46,8 @@ func (Ls *LinkShortnerAPI) UrlCreate(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	err := Ls.myconnection.AddUrls(reqBodyStruct.LongUrl, reqBodyStruct.ShortUrl)
+	// write to database
+	err := api.db.Put(reqBodyStruct.LongUrl, reqBodyStruct.ShortUrl)
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
 		if err := responseEncoder.Encode(&APIResponse{StatusMessage: err.Error()}); err != nil {
@@ -54,15 +58,15 @@ func (Ls *LinkShortnerAPI) UrlCreate(w http.ResponseWriter, r *http.Request) {
 	responseEncoder.Encode(&APIResponse{StatusMessage: "Ok"})
 }
 
-func (Ls *LinkShortnerAPI) UrlShow(w http.ResponseWriter, r *http.Request) {
+func (api *LinkShortnerAPI) UrlShow(w http.ResponseWriter, r *http.Request) {
 	//retrieve the variable from the request
 	vars := mux.Vars(r)
-	sUrl := vars["shorturl"]
-	if len(sUrl) > 0 {
-		//find long url that corresponds to the short url
-		lUrl, err := Ls.myconnection.FindlongUrl(sUrl)
+	url := vars["shorturl"]
+	if len(url) > 0 {
+		lUrl, err := api.db.Get(url)
 		if err != nil {
-			fmt.Fprintf(w, "Could not find saved long url that corresponds to the short url %s \n", sUrl)
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintf(w, "404 - Entry %s was not found in the database.\n", url)
 			return
 		}
 		//Ensure we are dealing with an absolute path

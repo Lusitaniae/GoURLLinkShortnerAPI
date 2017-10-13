@@ -1,3 +1,6 @@
+aws dynamodb create-table --attribute-definitions AttributeName=short,AttributeType=S AttributeName=long,AttributeType=S  --key-schema AttributeName=short,KeyType=HASH AttributeName=long,KeyType=RANGE --table-name localtest --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 --endpoint-url http://localhost:8000
+
+
 # Golang URL Shortener
 
 The application was built for self educational purposes and its provided as-is.

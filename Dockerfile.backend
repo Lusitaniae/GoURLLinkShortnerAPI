@@ -1,12 +1,11 @@
-FROM gliderlabs/alpine:3.3
+FROM gliderlabs/alpine:3.6
 
 WORKDIR /app
 
 ADD GoLinkShortener/GoLinkShortener /app
 ADD GoLinkShortener/index.html /app
 
-RUN groupadd -r user && useradd -r -g user user
-USER user
+USER nobody
 
 EXPOSE 5100:5100
 CMD ["/app/GoLinkShortener"]

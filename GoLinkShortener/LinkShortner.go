@@ -1,6 +1,18 @@
 package main
 
-import "net/http"
+import (
+	"flag"
+	"log"
+	"net/http"
+	"time"
+)
+
+var (
+	dynamoRegion   = flag.String("dynamo-region", "eu-west-1", "AWS region where DynamoDB database is hosted.")
+	dynamoEndpoint = flag.String("dynamo-endpoint", "http://127.0.0.1:8000", "DynamoDB database address.")
+	dynamoTable    = flag.String("dynamo-table", "url_shortener", "DynamoDB Table to store shortened urls.")
+	redisEndpoint  = flag.String("redis-endpoint", "127.0.0.1:6379", "Redis database address.")
+)
 
 /*
 	This is the entry point for the API, the purpose of the API is to shorten url links via a REST HTTP request
@@ -11,6 +23,8 @@ import "net/http"
 	The program makes use of the gorilla mux library for routing as well as the mgo library to interface with mongo database
 */
 func main() {
+
+	flag.Parse()
 	//Create a new API shortner API
 	LinkShortener := NewUrlLinkShortenerAPI()
 	//Create the needed routes for the API
@@ -18,5 +32,12 @@ func main() {
 	//Initiate the API routers
 	router := NewLinkShortenerRouter(routes)
 	//This will start the web server on local port 5100
-	http.ListenAndServe(":5100", router)
+	srv := &http.Server{
+		Handler: router,
+		Addr:    ":5100",
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+	}
+	log.Fatal(srv.ListenAndServe())
 }

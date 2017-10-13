@@ -1,4 +1,8 @@
 ---
+sudo: required
+services:
+  - docker
+
 language: go
 
 go:
@@ -13,8 +17,25 @@ env:
 - "PATH=/home/travis/gopath/bin:$PATH"
 
 before_install:
+  - export dynamo_table=url_shortener
+  - export app_flags="-dynamo-endpoint http://\$DYNAMO_PORT_8000_TCP_ADDR:8000 -dynamo-region eu-west-1 -dynamo-table $dynamo_table -redis-endpoint http://\$REDIS_PORT_6379_TCP_ADDR:8000"
+
+  - pip install --user awscli
+  - export PATH=$PATH:$HOME/.local/bin
+
+  - docker build -t app:latest -f Dockerfile.backend .
+
+  - docker pull redis
+  - docker pull cnadiminti/dynamodb-local
+
+  - docker run --name dynamo -p 8000:8000 -d dynamodb-local
+  - docker run --name redis -d redis
+
   # Fetch dependencies
   - go get -d ./GoLinkShortener/
+
+install:
+  - aws dynamodb create-table --attribute-definitions AttributeName=short,AttributeType=S AttributeName=long,AttributeType=S  --key-schema AttributeName=short,KeyType=HASH AttributeName=long,KeyType=RANGE --table-name $dynamo_table --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 --endpoint-url http://localhost:8000
 
 script:
   # Build Url Shortener
