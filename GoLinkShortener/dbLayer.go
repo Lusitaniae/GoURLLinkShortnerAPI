@@ -5,14 +5,15 @@
 package main
 
 import (
+	"log"
+	"fmt"
 	"errors"
+	"gopkg.in/redis.v5"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"gopkg.in/redis.v5"
-	"log"
 )
 
 var ErrDuplicate = errors.New("duplicate slug")
@@ -52,6 +53,10 @@ func NewRedis() *redis.Client {
 
 func NewDynamoDb() *dynamodb.DynamoDB {
 
+	if *dynamoEndpoint == "" {
+		*dynamoEndpoint = fmt.Sprintf("https://dynamodb.%s.amazonaws.com", *dynamoRegion)
+	}
+
 	session := NewSessionAWS(*dynamoRegion, *dynamoEndpoint)
 	return dynamodb.New(session)
 }
@@ -76,7 +81,7 @@ func (db *Database) Get(slug string) (destination string, err error) {
 		return destination, err
 	}
 
-	log.Printf("Source miss for %s with error  %v ", slug)
+	log.Printf("Database miss for %s with error  %v ", slug)
 	return destination, err
 }
 
@@ -88,7 +93,7 @@ func (db *Database) Put(slug string, destination string) (err error) {
 		return err
 	}
 
-	log.Printf("Inserted to source %s", destination)
+	log.Printf("Saved to database: %s %s", slug, destination)
 	return nil
 }
 
@@ -123,15 +128,13 @@ func (db *Database) PutRedis(slug string, destination string) (err error) {
 			log.Println(errSet)
 		}
 
-		log.Printf("Saving short:%s long:%s", slug, destination)
-
 	} else {
 
 		return ErrDuplicate
 
 	}
 
-	return
+	return nil
 
 }
 

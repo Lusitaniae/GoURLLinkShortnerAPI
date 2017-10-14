@@ -9,8 +9,8 @@ import (
 
 var (
 	dynamoRegion   = flag.String("dynamo-region", "eu-west-1", "AWS region where DynamoDB database is hosted.")
-	dynamoEndpoint = flag.String("dynamo-endpoint", "http://127.0.0.1:8000", "DynamoDB database address.")
 	dynamoTable    = flag.String("dynamo-table", "url_shortener", "DynamoDB Table to store shortened urls.")
+	dynamoEndpoint = flag.String("dynamo-endpoint", "", "Optional, address for (local) DynamoDB, if using AWS declaring the region will suffice.")
 	redisEndpoint  = flag.String("redis-endpoint", "127.0.0.1:6379", "Redis database address.")
 )
 

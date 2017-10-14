@@ -18,25 +18,49 @@ env:
 
 before_install:
   - export dynamo_table=url_shortener
-  - export app_flags="-dynamo-endpoint http://\$DYNAMO_PORT_8000_TCP_ADDR:8000 -dynamo-region eu-west-1 -dynamo-table $dynamo_table -redis-endpoint http://\$REDIS_PORT_6379_TCP_ADDR:8000"
+  - export app_flags="-dynamo-endpoint http://localhost:8000 -dynamo-region eu-west-1 -dynamo-table $dynamo_table -redis-endpoint localhost:6379"
 
   - pip install --user awscli
-  - export PATH=$PATH:$HOME/.local/bin
-
-  - docker build -t app:latest -f Dockerfile.backend .
+  - export AWS_DEFAULT_REGION=eu-west-1
+  - export AWS_ACCESS_KEY_ID=AAAAAAAAAAAA
+  - export AWS_SECRET_ACCESS_KEY=AAAAAAAAAAAA/AAAAAAAAAAAA
 
   - docker pull redis
   - docker pull cnadiminti/dynamodb-local
 
-  - docker run --name dynamo -p 8000:8000 -d dynamodb-local
-  - docker run --name redis -d redis
+  - docker run --name dynamo -p 8000:8000 -d cnadiminti/dynamodb-local
+  - docker run --name redis -p 6379:6379 -d redis
 
   # Fetch dependencies
   - go get -d ./GoLinkShortener/
 
 install:
-  - aws dynamodb create-table --attribute-definitions AttributeName=short,AttributeType=S AttributeName=long,AttributeType=S  --key-schema AttributeName=short,KeyType=HASH AttributeName=long,KeyType=RANGE --table-name $dynamo_table --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 --endpoint-url http://localhost:8000
+  - aws dynamodb create-table --attribute-definitions AttributeName=slug,AttributeType=S  --key-schema AttributeName=slug,KeyType=HASH --table-name $dynamo_table --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 --endpoint-url http://localhost:8000
 
 script:
   # Build Url Shortener
-  - go build -o UrlShortener ./GoLinkShortener/
+  - go build -o GoLinkShortener/GoLinkShortener ./GoLinkShortener/
+  - cd GoLinkShortener && ./GoLinkShortener $app_flags > app.log 2>&1 &
+
+  # Check to make sure we can reach Url Shortener homepage.
+  - >
+    curl -s localhost:5100
+    | grep -q 'Shortener Maximus'
+    && (echo 'Homepage is accessible' && exit 0)
+    || (echo 'Homepage is not accessible' && exit 1)
+
+  # Check to make sure we can submit an url.
+  - >
+    curl -s -H "Content-Type: application/json" -X POST -d '{"shorturl":"aaabbb","longurl":"http://example.com"}' http://localhost:5100/Create
+    | grep -q 'Ok'
+    && (echo 'Url submited with success' && exit 0)
+    || (echo 'Url submited with error' && exit 1)
+
+  # Check to make sure we are redirected to submited url
+  - >
+    curl -s -XGET -I localhost:5100/aaabbb
+    | grep -q 'Location: http://example.com'
+    && (echo 'Redirect is set correctly.' && exit 0)
+    || (echo 'Redirect is set incorrectly.' && exit 1)
+
+  - cat GoLinkShortener/app.log

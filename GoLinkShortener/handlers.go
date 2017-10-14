@@ -47,7 +47,7 @@ func (api *LinkShortnerAPI) UrlCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// write to database
-	err := api.db.Put(reqBodyStruct.LongUrl, reqBodyStruct.ShortUrl)
+	err := api.db.Put(reqBodyStruct.ShortUrl, reqBodyStruct.LongUrl )
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
 		if err := responseEncoder.Encode(&APIResponse{StatusMessage: err.Error()}); err != nil {
