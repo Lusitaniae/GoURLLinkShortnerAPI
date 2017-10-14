@@ -1,4 +1,4 @@
-# Golang URL Shortener
+# Golang URL Shortener [![Build Status](https://travis-ci.org/Lusitaniae/Golang-Url-Shortener.svg?branch=master)](https://travis-ci.org/Lusitaniae/Golang-Url-Shortener)
 
 The application was built for self educational purposes and its provided as-is.
 
